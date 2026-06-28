@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Custom Keyboard Pro</string>
+    <string name="keyboard_name">Custom Keyboard</string>
+    <string name="app_desc">Advanced keyboard with auto-convert, banned words filter, and full customization</string>
+    <string name="btn_enable">Enable in Settings</string>
+    <string name="btn_select">Select as Active Keyboard</string>
+    <string name="subtype_en">English</string>
+</resources>
