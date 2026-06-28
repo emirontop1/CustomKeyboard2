@@ -22,8 +22,6 @@ jobs:
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
-        with:
-          gradle-version: '8.4'
 
       - name: Create PNG icons
         run: |
@@ -51,37 +49,27 @@ jobs:
                   path = f"{folder}/{name}"
                   with open(path, "wb") as f:
                       f.write(make_png(size))
-                  print(f"Created: {path}")
           PYEOF
 
       - name: Build Debug APK
-        run: gradle :app:assembleDebug
+        run: gradle :app:assembleDebug --stacktrace
 
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
+      - name: Create GitHub Release & Upload APK
         if: success()
-        with:
-          tag_name: v1.0.0
-          name: "Custom Keyboard Pro v1.0.0"
-          body: |
-            # Custom Keyboard Pro
-            
-            Advanced Android keyboard with:
-            - ✅ Auto-convert (text shortcuts)
-            - ✅ Banned words filter
-            - ✅ Full customization
-            - ✅ Dark/light theme
-            - ✅ Custom accent colors
-            
-            ## Features
-            - Text shortcuts: "tşk" → "Teşekkürler!"
-            - Offensive word filtering
-            - Fully customizable theme
-            - Haptic & sound feedback
-            - Multi-language support
-          files: app/build/outputs/apk/debug/app-debug.apk
-          draft: false
-          prerelease: false
-          fail_on_unmatched_files: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          APK="app/build/outputs/apk/debug/app-debug.apk"
+          RELEASE=$(curl -sf -X POST \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{"tag_name":"v1.0.0","name":"Custom Keyboard Pro v1.0.0","body":"Advanced IME with auto-convert, banned words filter, and full customization","draft":false,"prerelease":false}' \
+            "https://api.github.com/repos/${{ github.repository }}/releases")
+          
+          UPLOAD_URL=$(echo "$RELEASE" | python3 -c "import sys,json; print(json.load(sys.stdin)['upload_url'].split('{')[0])")
+          
+          curl -sf -X POST \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Content-Type: application/vnd.android.package-archive" \
+            --data-binary "@$APK" \
+            "${UPLOAD_URL}?name=CustomKeyboard-Pro.apk"
+          
+          echo "✅ APK uploaded to: https://github.com/${{ github.repository }}/releases/tag/v1.0.0"
